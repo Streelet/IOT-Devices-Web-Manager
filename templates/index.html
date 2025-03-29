@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Device Control</title>
+    <script>
+        async function fetchDevices() {
+            const response = await fetch('/devices');
+            const devices = await response.json();
+            let deviceList = document.getElementById('device-list');
+            deviceList.innerHTML = '';
+
+            devices.forEach(device => {
+                let row = `<tr>
+                    <td>${device.id}</td>
+                    <td>${device.name}</td>
+                    <td>${device.topic}</td>
+                    <td>${device.ip || "N/A"}</td>
+                    <td>${device.status || "Unknown"}</td>
+                    <td>
+                        <button onclick="controlDevice(${device.id}, 'turn_on')">Encender</button>
+                        <button onclick="controlDevice(${device.id}, 'turn_off')">Apagar</button>
+                    </td>
+                </tr>`;
+                deviceList.innerHTML += row;
+            });
+        }
+
+        async function controlDevice(deviceId, action) {
+            const response = await fetch(`/devices/${deviceId}/${action}`, { method: 'POST' });
+            const result = await response.json();
+            alert(result.message);
+        }
+
+        async function addDevice() {
+            let name = document.getElementById('device-name').value;
+            let topic = document.getElementById('device-topic').value;
+
+            const response = await fetch('/devices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, topic })
+            });
+
+            const result = await response.json();
+            alert(result.message || result.error);
+            fetchDevices();
+        }
+
+        async function deleteDevice() {
+            let deviceId = document.getElementById('delete-device-id').value;
+            
+            const response = await fetch(`/devices/${deviceId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+            alert(result.message || result.error);
+            fetchDevices();
+        }
+
+        window.onload = fetchDevices;
+    </script>
+</head>
+<body>
+    <h1>Control de Dispositivos MQTT</h1>
+
+    <h2>Lista de Dispositivos</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Topic</th>
+                <th>IP</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="device-list"></tbody>
+    </table>
+
+    <h2>Agregar Nuevo Dispositivo</h2>
+    <label>Nombre: <input type="text" id="device-name"></label>
+    <label>Topic: <input type="text" id="device-topic"></label>
+    <button onclick="addDevice()">Agregar</button>
+
+    <h2>Eliminar Dispositivo</h2>
+    <label>ID del dispositivo: <input type="number" id="delete-device-id"></label>
+    <button onclick="deleteDevice()">Eliminar</button>
+</body>
+</html>
