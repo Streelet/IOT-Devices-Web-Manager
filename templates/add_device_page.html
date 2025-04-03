@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración de Dispositivo</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="setup-container">
+      <h2 v-if="step === 1">Paso 1: Conéctate a Streelet_</h2>
+      <h2 v-if="step === 2">Paso 2: Configurar Dispositivo</h2>
+
+      <p v-if="step === 1">Selecciona una red Streelet_ y conéctate manualmente desde Windows.</p>
+
+      <div v-if="step === 1">
+        <button @click="verifyConnection">He conectado</button>
+      </div>
+
+      <div v-if="step === 2">
+        <p>Ingresa la configuración de WiFi para el dispositivo:</p>
+        <input type="text" v-model="ssid" placeholder="SSID" />
+        <input type="password" v-model="password" placeholder="Contraseña" />
+        <button @click="sendConfig">Enviar configuración</button>
+      </div>
+
+      <p v-if="loading">Procesando...</p>
+      <p v-if="message">{{ message }}</p>
+    </div>
+  </div>
+
+  <script>
+    Vue.createApp({
+      data() {
+        return {
+          step: 1,
+          ssid: "",
+          password: "",
+          loading: false,
+          message: ""
+        };
+      },
+      methods: {
+        async verifyConnection() {
+          this.loading = true;
+          try {
+            const response = await fetch("/wifi");
+            if (response.ok) {
+              this.step = 2;  // Avanzar al paso 2 si la conexión es válida
+            } else {
+              this.message = "No estás conectado a una red Streelet_";
+            }
+          } catch (error) {
+            console.error("Error al verificar conexión:", error);
+            this.message = "Error al verificar conexión";
+          } finally {
+            this.loading = false;
+          }
+        },
+        async sendConfig() {
+          if (!this.ssid || !this.password) {
+            this.message = "Debes ingresar SSID y contraseña";
+            return;
+          }
+          this.loading = true;
+          try {
+            const response = await fetch("/configure", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ssid: this.ssid, password: this.password })
+            });
+
+            const result = await response.json();
+            this.message = result.message || "Configuración enviada";
+          } catch (error) {
+            console.error("Error al enviar configuración:", error);
+            this.message = "Error al enviar configuración";
+          } finally {
+            this.loading = false;
+          }
+        }
+      }
+    }).mount("#app");
+  </script>
+
+  <style>
+    .setup-container {
+      text-align: center;
+      padding: 20px;
+      margin-top: 50px;
+      background-color: #f4f4f9;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    p {
+      font-size: 1.2em;
+      color: #666;
+    }
+
+    input {
+      display: block;
+      margin: 10px auto;
+      padding: 8px;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</body>
+</html>

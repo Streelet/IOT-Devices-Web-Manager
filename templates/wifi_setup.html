@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Configurar WiFi</title>
+</head>
+<body>
+    <h1>Configurar Red WiFi</h1>
+    <form action="{{ url_for('wifi_setup') }}" method="post">
+        <div>
+            <label for="ssid">SSID:</label>
+            <input type="text" id="ssid" name="ssid" required>
+        </div>
+        <div>
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Guardar Credenciales</button>
+    </form>
+</body>
+</html>

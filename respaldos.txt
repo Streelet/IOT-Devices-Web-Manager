@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IoT Portal Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bulma CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
+  <!-- Animate.css (opcional para animaciones suaves) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- FontAwesome para íconos (opcional) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Vue.js -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+  <style>
+    /* Ajustes de estilo extra */
+    body {
+      background-color: #F7F7F7;
+    }
+    .navbar {
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+    }
+    .sidebar {
+      background-color: #fff;
+      min-height: 100vh; /* Para extender todo el alto de la pantalla */
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    .sidebar .menu-label {
+      margin-top: 1rem;
+    }
+    .card-stats {
+      border-radius: 8px;
+      color: #fff;
+      padding: 1.5rem;
+    }
+    /* Ejemplo de colores para tarjetas de métricas */
+    .bg-blue { background-color: #2196F3; }
+    .bg-purple { background-color: #9C27B0; }
+    .bg-orange { background-color: #FF9800; }
+    .bg-red { background-color: #F44336; }
+
+    /* ---------------------------- */
+    /* ESTILOS PARA LAS TARJETAS DE DISPOSITIVOS */
+    /* ---------------------------- */
+    .device-card {
+      /* Si quieres que todos tengan el mismo gradiente por defecto: */
+      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+      border-radius: 16px;
+      color: #ffffff;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease;
+    }
+    .device-card:hover {
+      transform: translateY(-3px);
+    }
+    /* Encabezado de la tarjeta (nombre + menú) */
+    .device-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      background: none; /* para anular fondo de Bulma */
+      border-bottom: none; /* quitar línea de la card-header */
+      padding: 0;
+    }
+    .device-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .device-menu {
+      cursor: pointer;
+    }
+    /* Ícono centrado en círculo */
+    .device-icon-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .device-icon-circle {
+      background-color: #ffffff;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .device-icon {
+      width: 48px;
+      height: 48px;
+    }
+    /* Contenedor de info (Power, Thermal, link) */
+    .device-info {
+      background-color: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .device-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .device-row span {
+      font-size: 0.95rem;
+    }
+    .device-info-link {
+      text-align: right;
+    }
+    .device-info-link a {
+      color: #ffffff;
+      text-decoration: underline;
+      font-weight: 500;
+    }
+    /* Switch estilo */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: '';
+      height: 16px;
+      width: 16px;
+      left: 3px; top: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #66bb6a;
+    }
+    input:focus + .slider {
+      box-shadow: 0 0 1px #66bb6a;
+    }
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+  </style>
+</head>
+
+<body>
+{% raw %}
+<div id="app">
+  <!-- NAVBAR SUPERIOR -->
+  <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="#">
+        <strong>IoT Portal</strong>
+      </a>
+      <!-- Botón para colapsar sidebar en móviles -->
+      <a role="button" class="navbar-burger" :class="{'is-active': isSidebarActive}" @click="toggleSidebar" aria-label="menu" aria-expanded="false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu is-active">
+      <div class="navbar-end">
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">
+            <figure class="image is-24x24" style="margin-right:8px;">
+              <img src="https://via.placeholder.com/24" alt="User Avatar">
+            </figure>
+            <span>User</span>
+          </a>
+          <div class="navbar-dropdown is-right">
+            <a class="navbar-item">Profile</a>
+            <a class="navbar-item">Settings</a>
+            <hr class="navbar-divider">
+            <a class="navbar-item">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="columns" style="margin-top: 3.5rem;">
+    <!-- SIDEBAR IZQUIERDO -->
+    <div class="column is-2 sidebar" :class="{'is-hidden-mobile': !isSidebarActive}">
+      <aside class="menu p-3">
+        <p class="menu-label">Management</p>
+        <ul class="menu-list">
+          <li><a href="#" class="is-active">Dashboard</a></li>
+          <li><a href="#">Device Groups</a></li>
+          <li><a href="#">Device Categories</a></li>
+          <li><a href="#">Device Jobs</a></li>
+          <li><a href="#">Device Management</a></li>
+        </ul>
+        <p class="menu-label">Settings</p>
+        <ul class="menu-list">
+          <li><a href="#">Saved Commands</a></li>
+          <li><a href="#">API Tokens</a></li>
+        </ul>
+      </aside>
+    </div>
+
+    <!-- SECCIÓN PRINCIPAL (DASHBOARD) -->
+    <div class="column is-10">
+      <section class="section">
+        <div class="container">
+          <!-- Tarjetas de Métricas -->
+          <div class="columns is-multiline">
+            <div class="column is-3" v-for="(stat, index) in stats" :key="index">
+              <div class="card-stats animate__animated animate__fadeInUp"
+                   :class="[stat.colorClass]">
+                <div class="title is-5">{{ stat.title }}</div>
+                <div class="subtitle is-3">{{ stat.value }}</div>
+                <div class="is-small">{{ stat.subtitle }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfica de Ejemplo (Temperature) -->
+          <div class="card mt-5 animate__animated animate__fadeInUp">
+            <header class="card-header">
+              <p class="card-header-title">
+                Temperature
+              </p>
+              <div class="card-header-icon">
+                <div class="buttons has-addons">
+                  <button class="button" :class="{'is-info': activeRange==='1h'}" @click="setRange('1h')">Last 1 hour</button>
+                  <button class="button" :class="{'is-info': activeRange==='12h'}" @click="setRange('12h')">Last 12 hours</button>
+                  <button class="button" :class="{'is-info': activeRange==='1d'}" @click="setRange('1d')">Last 1 day</button>
+                  <button class="button" :class="{'is-info': activeRange==='7d'}" @click="setRange('7d')">Last 7 days</button>
+                </div>
+              </div>
+            </header>
+            <div class="card-content">
+              <canvas id="tempChart" width="400" height="150"></canvas>
+            </div>
+          </div>
+
+          <!-- Sección de Dispositivos con diseño de tarjeta increíble -->
+          <div class="mt-5">
+            <h2 class="title is-4">Devices</h2>
+            <div class="columns is-multiline">
+              <!-- Aquí viene el nuevo diseño -->
+              <div class="column is-3" v-for="device in devices" :key="device.id">
+                <!-- Tarjeta degradada con ícono y switch -->
+                <div class="device-card animate__animated animate__fadeInUp"
+                     :style="{ background: device.gradientBg }">
+                  <div class="card-header">
+                    <span class="device-title">{{ device.name }}</span>
+                    <span class="device-menu">
+                      <i class="fas fa-ellipsis-h"></i>
+                    </span>
+                  </div>
+                  <div class="device-icon-wrapper">
+                    <div class="device-icon-circle">
+                      <img :src="device.iconUrl" alt="Device Icon" class="device-icon">
+                    </div>
+                  </div>
+                  <div class="device-info">
+                    <div class="device-row">
+                      <span>Power</span>
+                      <label class="switch">
+                        <input type="checkbox" :checked="device.device_status === 1" @change="toggleDevicePower(device)">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="device-row">
+                      <span>Thermal</span>
+                      <strong>{{ device.thermal }} °C</strong>
+                    </div>
+                    <div class="device-info-link">
+                      <a href="#" @click.prevent="showDeviceInfo(device)">Device Information &rarr;</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Fin tarjeta -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endraw %}
+
+<script>
+{% raw %}
+new Vue({
+  el: '#app',
+  data: {
+    isSidebarActive: true, // Controla el sidebar en móvil
+    activeRange: '1h',     // Rango activo para la gráfica
+    stats: [
+      { title: 'Devices', value: 5, subtitle: 'Connected', colorClass: 'bg-blue' },
+      { title: 'Device Groups', value: 0, subtitle: 'Active Groups', colorClass: 'bg-purple' },
+      { title: 'Device Categories', value: 5, subtitle: 'Categories in use', colorClass: 'bg-orange' },
+      { title: 'Device Jobs', value: 0, subtitle: 'Scheduled Jobs', colorClass: 'bg-red' },
+    ],
+    devices: []
+  },
+  methods: {
+    toggleSidebar() {
+      this.isSidebarActive = !this.isSidebarActive;
+    },
+    setRange(range) {
+      this.activeRange = range;
+      // Aquí puedes llamar a tu backend para recargar la data de la gráfica
+      this.loadTemperatureData();
+    },
+    loadTemperatureData() {
+      // Ejemplo: fetch(`/api/temperature?range=${this.activeRange}`)
+      //   .then(res => res.json())
+      //   .then(data => {
+      //     // Actualizas this.chartData y vuelves a renderizar
+      //   });
+      // Por ahora, es solo un placeholder
+    },
+    fetchDevices() {
+      // Llama a tu backend en Python para obtener la lista de dispositivos
+      // fetch('/devices')
+      //   .then(response => response.json())
+      //   .then(data => {
+      //     this.devices = data;
+      //   })
+      //   .catch(error => console.error('Error fetching devices:', error));
+      //
+      // Para el demo, simulamos con data estática
+      this.devices = [
+        {
+          id: 1,
+          name: 'Fan 02',
+          ip: '192.168.1.10',
+          status: 'online',
+          device_status: 1,
+          thermal: 20,
+          iconUrl: 'https://via.placeholder.com/48',
+          gradientBg: 'linear-gradient(135deg, #1abc9c 0%, #16a085 100%)'
+        },
+        {
+          id: 2,
+          name: 'Home TV',
+          ip: '192.168.1.11',
+          status: 'offline',
+          device_status: 0,
+          thermal: 30,
+          iconUrl: 'https://via.placeholder.com/48',
+          gradientBg: 'linear-gradient(135deg, #e67e22 0%, #d35400 100%)'
+        },
+        {
+          id: 3,
+          name: 'Pump 01',
+          ip: '192.168.1.12',
+          status: 'online',
+          device_status: 1,
+          thermal: 25,
+          iconUrl: 'https://via.placeholder.com/48',
+          gradientBg: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)'
+        }
+      ];
+    },
+    toggleDevicePower(device) {
+      const newState = device.device_status === 1 ? 0 : 1;
+      // fetch(`/devices/${device.id}/set_power/${newState}`, { method: 'POST' })
+      //   .then(res => res.json())
+      //   .then(() => {
+      //     this.fetchDevices();
+      //   })
+      //   .catch(error => console.error('Error toggling device power:', error));
+      // Demo local:
+      device.device_status = newState;
+    },
+    deleteDevice(id) {
+      // fetch(`/devices/${id}`, { method: 'DELETE' })
+      //   .then(res => res.json())
+      //   .then(() => {
+      //     this.fetchDevices();
+      //   })
+      //   .catch(error => console.error('Error deleting device:', error));
+      // Demo local:
+      this.devices = this.devices.filter(dev => dev.id !== id);
+    },
+    showDeviceInfo(device) {
+      alert(`Mostrar información de ${device.name}`);
+      // Aquí podrías abrir un modal o navegar a otra ruta con más detalles
+    },
+    initChart() {
+      const ctx = document.getElementById('tempChart').getContext('2d');
+      // Ejemplo básico, puedes adaptar a tus datos reales
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['10:00', '10:10', '10:20', '10:30', '10:40', '10:50'],
+          datasets: [{
+            label: 'Temperature (°C)',
+            data: [20, 22, 21, 23, 24, 22],
+            backgroundColor: 'rgba(33,150,243,0.2)',
+            borderColor: '#2196F3',
+            borderWidth: 2,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    }
+  },
+  mounted() {
+    // Cargamos datos al montar el componente
+    this.fetchDevices();
+    this.initChart();
+  }
+});
+{% endraw %}
+</script>
+</body>
+</html>
