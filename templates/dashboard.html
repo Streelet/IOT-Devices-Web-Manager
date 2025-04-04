@@ -1,170 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>IoT Portal Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>IoT Portal Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Bulma CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
-  <!-- Animate.css -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-  <!-- FontAwesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <!-- Custom CSS (movido a carpeta externa) -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Vue.js -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-
+    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <style>
+        .device-menu {
+            position: relative;
+            display: inline-block;
+        }
+        .device-menu-dropdown {
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 80px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            padding: 8px 0;
+            z-index: 1;
+            right: 0;
+            display: none;
+            text-align: left;
+        }
+        .device-menu-dropdown a {
+            color: black;
+            padding: 8px 12px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .device-menu-dropdown a:hover {background-color: #ddd;}
+        .device-card:hover .device-menu-dropdown {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-  <div id="app">
-    <!-- NAVBAR -->
-    <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
-      <div class="navbar-brand">
-        <a class="navbar-item" href="#">
-          <strong>IoT Portal</strong>
-        </a>
-        <a role="button" class="navbar-burger" :class="{'is-active': isSidebarActive}" @click="toggleSidebar" aria-label="menu" aria-expanded="false">
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-        </a>
-      </div>
-      <div class="navbar-menu is-active">
-        <div class="navbar-end">
-          <div class="navbar-item has-dropdown is-hoverable">
-            <a class="navbar-link">
-              <figure class="image is-24x24" style="margin-right:8px;">
-                <img src="https://via.placeholder.com/24" alt="User Avatar">
-              </figure>
-              <span>User</span>
-            </a>
-            <div class="navbar-dropdown is-right">
-              <a class="navbar-item">Profile</a>
-              <a class="navbar-item">Settings</a>
-              <hr class="navbar-divider">
-              <a class="navbar-item">Logout</a>
+    <div id="app">
+        <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    <strong>IoT Portal</strong>
+                </a>
+                <a role="button" class="navbar-burger" :class="{'is-active': isSidebarActive}" @click="toggleSidebar" aria-label="menu" aria-expanded="false">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
             </div>
-          </div>
+            <div class="navbar-menu is-active">
+                <div class="navbar-end">
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">
+                            <figure class="image is-24x24" style="margin-right:8px;">
+                                <img src="https://www.famousbirthdays.com/faces/el-fedelobo-image.jpg" alt="User Avatar">
+                            </figure>
+                            <span>User</span>
+                        </a>
+                        <div class="navbar-dropdown is-right">
+                            <a class="navbar-item">Profile</a>
+                            <a class="navbar-item">Settings</a>
+                            <hr class="navbar-divider">
+                            <a class="navbar-item">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="columns" style="margin-top: 3.5rem;">
+            <div class="column is-2 sidebar" :class="{'is-hidden-mobile': !isSidebarActive}">
+                <aside class="menu p-3">
+                    <p class="menu-label">Management</p>
+                    <ul class="menu-list">
+                        <li><a href="#" class="is-active">Dashboard</a></li>
+                        <li><a href="#">Device Groups</a></li>
+                        <li><a href="#">Device Categories</a></li>
+                        <li><a href="#">Device Jobs</a></li>
+                        <li><a href="#">Device Management</a></li>
+                    </ul>
+                    <p class="menu-label">Settings</p>
+                    <ul class="menu-list">
+                        <li><a href="#">Saved Commands</a></li>
+                        <li><a href="#">API Tokens</a></li>
+                    </ul>
+                </aside>
+            </div>
+
+            <div class="column is-10">
+                <section class="section">
+                    <div class="container">
+                        <div class="columns is-multiline">
+                            <div class="column is-3" v-for="(stat, index) in stats" :key="index">
+                                <div class="card-stats animate__animated animate__fadeInUp" :class="stat.colorClass" style="color: white;">
+                                    <div class="title is-5">[[ stat.title ]]</div>
+                                    <div class="subtitle is-3">[[ stat.value ]]</div>
+                                    <div class="is-small">[[ stat.subtitle ]]</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-5 animate__animated animate__fadeInUp" style="background: linear-gradient(135deg, #53107a 0%, #664cad 100%); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 180px; text-align: center;">
+                            <h1 class="title is-2" style="color: white;">IOT WEB MANAGER</h1>
+                            {% if wifi_ssid %}
+                            <p class="subtitle is-5" style="color: white; margin-top: 5px;">Wi-Fi SSID: <strong>{{ wifi_ssid }}</strong></p>
+                            {% endif %}
+                            {% if wifi_password %}
+                            <p class="subtitle is-5" style="color: white; margin-top: 5px;">Wi-Fi Password: <strong>{{ wifi_password }}</strong></p>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-5">
+                            <h2 class="title is-4">Devices</h2>
+                            <div class="columns is-multiline">
+                                <div class="column is-3" v-for="device in devices" :key="device.id">
+                                    <div class="device-card animate__animated animate__fadeInUp" :style="{ background: device.gradientBg }">
+                                        <div class="card-header">
+                                            <span class="device-title">[[ device.name ]]</span>
+                                            <span class="device-menu">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                                <div class="device-menu-dropdown">
+                                                    <a @click="deleteDevice(device.id)">Eliminar</a>
+                                                </div>
+                                            </span>
+                                        </div>
+                                        <div class="device-icon-wrapper">
+                                            <div class="device-icon-circle">
+                                                <img :src="device.iconUrl" alt="Device Icon" class="device-icon">
+                                            </div>
+                                        </div>
+                                        <div class="device-info">
+                                            <div class="device-row">
+                                                <span>Power</span>
+                                                <label class="switch">
+                                                    <input type="checkbox" :checked="device.device_status === 1" @change="toggleDevicePower(device)">
+                                                    <span class="slider round"></span>
+                                                </label>
+                                            </div>
+                                            <div class="device-row">
+                                                <span>Status</span>
+                                                <strong>[[ device.status ]]</strong>
+                                            </div>
+                                            <div class="device-info-link">
+                                                <a href="#" @click.prevent="showDeviceInfo(device)">Device Information &rarr;</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-3">
+                                    <div class="device-card animate__animated animate__fadeInUp" style="background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;" @click="addDevice">
+                                        <div style="font-size: 3rem; color: #fff;">
+                                            <i class="fas fa-plus"></i>
+                                        </div>
+                                        <div class="title is-5" style="color: #fff;">Add Device</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
-      </div>
-    </nav>
-
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div class="columns" style="margin-top: 3.5rem;">
-      <!-- SIDEBAR -->
-      <div class="column is-2 sidebar" :class="{'is-hidden-mobile': !isSidebarActive}">
-        <aside class="menu p-3">
-          <p class="menu-label">Management</p>
-          <ul class="menu-list">
-            <li><a href="#" class="is-active">Dashboard</a></li>
-            <li><a href="#">Device Groups</a></li>
-            <li><a href="#">Device Categories</a></li>
-            <li><a href="#">Device Jobs</a></li>
-            <li><a href="#">Device Management</a></li>
-          </ul>
-          <p class="menu-label">Settings</p>
-          <ul class="menu-list">
-            <li><a href="#">Saved Commands</a></li>
-            <li><a href="#">API Tokens</a></li>
-          </ul>
-        </aside>
-      </div>
-
-      <!-- DASHBOARD -->
-      <div class="column is-10">
-        <section class="section">
-          <div class="container">
-            <!-- Tarjetas de Métricas -->
-            <div class="columns is-multiline">
-              <div class="column is-3" v-for="(stat, index) in stats" :key="index">
-                <div class="card-stats animate__animated animate__fadeInUp" :class="stat.colorClass">
-                  <div class="title is-5">[[ stat.title ]]</div>
-                  <div class="subtitle is-3">[[ stat.value ]]</div>
-                  <div class="is-small">[[ stat.subtitle ]]</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Gráfica de Temperature -->
-            <div class="card mt-5 animate__animated animate__fadeInUp">
-              <header class="card-header">
-                <p class="card-header-title">Temperature</p>
-                <div class="card-header-icon">
-                  <div class="buttons has-addons">
-                    <button class="button" :class="{'is-info': activeRange==='1h'}" @click="setRange('1h')">Last 1 hour</button>
-                    <button class="button" :class="{'is-info': activeRange==='12h'}" @click="setRange('12h')">Last 12 hours</button>
-                    <button class="button" :class="{'is-info': activeRange==='1d'}" @click="setRange('1d')">Last 1 day</button>
-                    <button class="button" :class="{'is-info': activeRange==='7d'}" @click="setRange('7d')">Last 7 days</button>
-                  </div>
-                </div>
-              </header>
-              <div class="card-content">
-                <canvas id="tempChart" width="400" height="150"></canvas>
-              </div>
-            </div>
-
-            <!-- Sección de Dispositivos -->
-            <div class="mt-5">
-              <h2 class="title is-4">Devices</h2>
-              <div class="columns is-multiline">
-                <!-- Tarjetas para cada dispositivo -->
-                <div class="column is-3" v-for="device in devices" :key="device.id">
-                  <div class="device-card animate__animated animate__fadeInUp" :style="{ background: device.gradientBg }">
-                    <div class="card-header">
-                      <span class="device-title">[[ device.name ]]</span>
-                      <span class="device-menu">
-                        <i class="fas fa-ellipsis-h"></i>
-                      </span>
-                    </div>
-                    <div class="device-icon-wrapper">
-                      <div class="device-icon-circle">
-                        <img :src="device.iconUrl" alt="Device Icon" class="device-icon">
-                      </div>
-                    </div>
-                    <div class="device-info">
-                      <div class="device-row">
-                        <span>Power</span>
-                        <label class="switch">
-                          <input type="checkbox" :checked="device.device_status === 1" @change="toggleDevicePower(device)">
-                          <span class="slider round"></span>
-                        </label>
-                      </div>
-                      <div class="device-row">
-                        <span>Thermal</span>
-                        <strong>[[ device.thermal ]] °C</strong>
-                      </div>
-                      <div class="device-info-link">
-                        <a href="#" @click.prevent="showDeviceInfo(device)">Device Information &rarr;</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <!-- Tarjeta para agregar nuevo dispositivo -->
-                <div class="column is-3">
-                  <div class="device-card animate__animated animate__fadeInUp" style="background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;" @click="addDevice">
-                    <div style="font-size: 3rem; color: #fff;">
-                      <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="title is-5" style="color: #fff;">Add Device</div>
-                  </div>
-                </div>
-                <!-- Fin tarjetas de dispositivos -->
-              </div>
-            </div>
-
-          </div>
-        </section>
-      </div>
     </div>
-  </div>
 
-  
-
-    <!-- Vue.js Instance -->
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 </html>

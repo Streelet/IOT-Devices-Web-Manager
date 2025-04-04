@@ -9,6 +9,7 @@ load_dotenv()
 mqtt_broker_host = os.getenv("MQTT_BROKER_HOST")
 mqtt_port = int(os.getenv("MQTT_PORT"))
 mqtt_topic = os.getenv("MQTT_TOPIC")
+mqtt_topic = mqtt_topic 
 
 def on_connect(client, userdata, flags, rc):
     print(f"Conectado con código {rc}")
